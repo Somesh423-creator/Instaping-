@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Invoice AI - Professional Invoicing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    
+    <style>
+        /* Your entire beautiful CSS is pasted here without any changes */
+        :root{--primary-color:#0d6efd;--secondary-color:#6c757d;--bg-light:#f4f7f6;--text-light:#212529;--bg-dark:#1e2733;--text-dark:#e0e6eb;--card-bg-light:#ffffff;--card-bg-dark:#2a3848;--border-color-light:#e0e4e8;--border-color-dark:#4a5d71;--success-color:#28a745;--error-color:#dc3545;--font-heading:'Poppins',sans-serif;--font-body:'Inter',sans-serif;--highlight-yellow:#ffc107}body{font-family:var(--font-body);margin:0;transition:background-color .3s,color .3s;overflow-x:hidden;line-height:1.6}.light-mode{background-color:var(--bg-light);color:var(--text-light)}.dark-mode{background-color:var(--bg-dark);color:var(--text-dark)}.dark-mode .card,.dark-mode header,.dark-mode .auth-wrapper,.dark-mode .pricing-card{background-color:var(--card-bg-dark);border-color:var(--border-color-dark);box-shadow:0 10px 30px rgba(0,0,0,.3)}.dark-mode input,.dark-mode textarea{background-color:#3b4e61;color:var(--text-dark);border-color:var(--border-color-dark)}.dark-mode input::placeholder,.dark-mode textarea::placeholder{color:#aebecf}.dark-mode .divider::before,.dark-mode .divider::after{background-color:var(--border-color-dark)}.dark-mode .auth-button.google{background-color:#3b4e61;color:var(--text-dark);border-color:var(--border-color-dark)}.dark-mode .auth-button.google:hover{background-color:#4a5d71}.dark-mode .faded-feature{color:#8a9ba5}header{background:var(--card-bg-light);box-shadow:0 4px 12px rgba(0,0,0,.08);padding:1rem 2rem;border-bottom:1px solid var(--border-color-light);position:fixed;width:100%;top:0;z-index:1000}nav{display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto}.logo-title{font-size:1.8rem;color:var(--primary-color);font-weight:700;font-family:var(--font-heading)}main{padding:1rem;max-width:1200px;margin:8rem auto 2rem auto}.section-container{padding:4rem 2rem;text-align:center;margin-bottom:4rem}.section-container h2{font-family:var(--font-heading);font-size:2.8rem;margin-bottom:1rem;color:var(--text-light)}.dark-mode .section-container h2{color:var(--text-dark)}.section-description{font-size:1.2rem;max-width:700px;margin:0 auto 3rem auto;color:var(--secondary-color)}#hero-section{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:calc(80vh - 100px);margin-top:-60px;padding:2rem;background:linear-gradient(135deg,var(--primary-color) 0%,#007bff 100%);color:#fff;border-radius:15px;margin-bottom:4rem;box-shadow:0 15px 40px rgba(0,0,0,.2);position:relative;overflow:hidden}#hero-section h1{font-family:var(--font-heading);font-size:3.5rem;margin-bottom:1.5rem;font-weight:700;line-height:1.2;text-shadow:0 3px 6px rgba(0,0,0,.15)}#hero-section p{font-size:1.4rem;max-width:800px;margin-bottom:2.5rem;font-weight:400}.hero-buttons .cta-button{padding:18px 35px;font-size:1.2rem;border-radius:50px;margin:0 1rem;background-color:#fff;color:var(--primary-color);box-shadow:0 8px 15px rgba(0,0,0,.15)}.hero-buttons .cta-button:hover{background-color:#f0f0f0;transform:translateY(-3px);box-shadow:0 12px 20px rgba(0,0,0,.25)}.hero-buttons .secondary-cta{background-color:transparent;border:2px solid #fff;color:#fff;box-shadow:none}.hero-buttons .secondary-cta:hover{background-color:rgba(255,255,255,.1);transform:translateY(-3px);box-shadow:none}#auth-section{display:flex;justify-content:center;align-items:center;padding:4rem 0}.auth-wrapper{display:flex;width:100%;max-width:950px;background:var(--card-bg-light);border-radius:16px;box-shadow:0 15px 40px rgba(0,0,0,.15);overflow:hidden;border:1px solid var(--border-color-light)}.auth-branding{background:linear-gradient(160deg,var(--primary-color),#007bff);color:#fff;padding:50px;width:45%;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}.auth-branding::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background-image:radial-gradient(circle at 100% 150%,var(--primary-color) 0%,rgba(255,255,255,0) 80%),radial-gradient(circle at 0% -50%,var(--primary-color) 0%,rgba(255,255,255,0) 80%);opacity:.2;pointer-events:none}.auth-branding h2{font-size:2.5rem;margin-bottom:1.2rem;font-weight:700;font-family:var(--font-heading);position:relative}.auth-branding p{font-size:1.2rem;line-height:1.6;margin-bottom:2rem;position:relative}.auth-branding .features{list-style:none;padding:0;margin-top:2rem}.auth-branding .features li{margin-bottom:1.2rem;display:flex;align-items:center;font-size:1.1rem;font-weight:500;position:relative}.auth-branding .features svg{width:26px;height:26px;margin-right:12px;flex-shrink:0;color:#b3e0ff}.auth-container{padding:50px;width:55%;box-sizing:border-box}.auth-container h3{font-size:2.2rem;text-align:center;margin-bottom:2rem;color:var(--primary-color);font-family:var(--font-heading);font-weight:600}.divider{display:flex;align-items:center;text-align:center;margin:2rem 0;color:#888;font-size:.95rem}.divider::before,.divider::after{content:'';flex:1;border-bottom:1px solid var(--border-color-light)}.divider:not(:empty)::before{margin-right:1em}.divider:not(:empty)::after{margin-left:1em}input,textarea{width:100%;padding:15px 18px;margin-bottom:1.2rem;border-radius:10px;border:1px solid var(--border-color-light);font-size:1.05rem;box-sizing:border-box;transition:border-color .2s,box-shadow .2s}input:focus,textarea:focus{outline:none;border-color:var(--primary-color);box-shadow:0 0 0 3px rgba(13,110,253,.25)}.auth-button,.cta-button{border:none;cursor:pointer;font-weight:600;transition:all .3s ease;font-family:var(--font-body)}.auth-button.primary,.cta-button{background-color:var(--primary-color);color:#fff;padding:15px 25px;border-radius:10px}.auth-button.primary:hover,.cta-button:hover{background-color:#0b5ed7;transform:translateY(-2px);box-shadow:0 8px 15px rgba(0,0,0,.1)}.auth-button.primary:active,.cta-button:active{transform:translateY(0);box-shadow:none}.cta-button.outline-button{background-color:transparent;border:1px solid var(--primary-color);color:var(--primary-color)}.cta-button.outline-button:hover{background-color:var(--primary-color);color:#fff}.auth-button.google{background-color:#fff;color:#333;border:1px solid var(--border-color-light);display:flex;justify-content:center;align-items:center;gap:12px;padding:15px 20px;border-radius:10px;font-size:1.05rem;box-shadow:0 2px 8px rgba(0,0,0,.05)}.auth-button.google:hover{background-color:var(--bg-light);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.08)}.auth-button.google:active{transform:translateY(0);box-shadow:0 1px 4px rgba(0,0,0,.05)}.google-icon{width:22px;height:22px}.card{background-color:var(--card-bg-light);border-radius:12px;padding:2.5rem;margin-bottom:2.5rem;box-shadow:0 8px 25px rgba(0,0,0,.08);border:1px solid var(--border-color-light)}.message{text-align:center;font-weight:500;padding:1rem;border-radius:8px;margin-top:1.5rem;visibility:hidden;opacity:0;transition:visibility 0s,opacity .4s linear}.message.show{visibility:visible;opacity:1}.message.success{color:var(--success-color);background-color:rgba(40,167,69,.12)}.message.error{color:var(--error-color);background-color:rgba(220,53,69,.12)}#dark-mode-toggle{background:0 0;border:none;font-size:1.7rem;cursor:pointer;color:var(--text-light);transition:transform .2s ease}.dark-mode #dark-mode-toggle{color:var(--text-dark)}#dark-mode-toggle:hover{transform:scale(1.1)}#pricing-section{background-color:var(--bg-light);padding-top:6rem;padding-bottom:6rem}.dark-mode #pricing-section{background-color:var(--bg-dark)}.pricing-toggle{display:none}.pricing-cards-container{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2.5rem;max-width:1000px;margin:0 auto}.pricing-card{background-color:var(--card-bg-light);border-radius:12px;padding:2.5rem 2rem;box-shadow:0 8px 25px rgba(0,0,0,.08);border:1px solid var(--border-color-light);display:flex;flex-direction:column;align-items:center;text-align:center;transition:transform .3s ease,box-shadow .3s ease;position:relative}.pricing-card:hover{transform:translateY(-8px);box-shadow:0 15px 35px rgba(0,0,0,.15)}.pricing-card.primary-plan{border-color:var(--primary-color);box-shadow:0 8px 30px rgba(13,110,253,.2)}.dark-mode .pricing-card.primary-plan{border-color:var(--primary-color);box-shadow:0 8px 30px rgba(13,110,253,.4)}.pricing-card h3{font-family:var(--font-heading);font-size:1.8rem;color:var(--primary-color);margin-bottom:.8rem}.pricing-card .price-value{font-size:3.5rem;font-weight:700;color:var(--text-light);margin-bottom:.5rem;line-height:1}.dark-mode .pricing-card .price-value{color:var(--text-dark)}.pricing-card .price-yearly{display:none!important}.pricing-card .currency-symbol,.pricing-card .price-period{font-size:1.5rem;vertical-align:super;font-weight:500;color:var(--secondary-color)}.pricing-card .price-description{font-size:1rem;color:var(--secondary-color);min-height:40px;margin-bottom:1.5rem}.pricing-card .features-list{list-style:none;padding:0;margin-bottom:2rem;text-align:left;width:100%}.pricing-card .features-list li{display:flex;align-items:center;margin-bottom:.8rem;font-size:1.05rem;color:var(--text-light)}.dark-mode .pricing-card .features-list li{color:var(--text-dark)}.pricing-card .features-list .check-icon{width:20px;height:20px;color:var(--success-color);margin-right:10px;flex-shrink:0}.pricing-card .features-list .x-icon{width:20px;height:20px;color:var(--error-color);margin-right:10px;flex-shrink:0}.pricing-card .features-list .faded-feature{color:#a0aebc}.dark-mode .pricing-card .features-list .faded-feature{color:#6a7a8a}.pricing-card .plan-button{margin-top:auto;width:90%;padding:14px 25px}.pricing-card.primary-plan .plan-button{background-color:var(--primary-color)}.recommended-badge{position:absolute;top:0;right:0;background-color:var(--highlight-yellow);color:#333;font-size:.85rem;font-weight:700;padding:5px 15px;border-top-right-radius:12px;border-bottom-left-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.1)}#dashboard-section{padding-top:2rem}.dashboard-header{text-align:center;margin-bottom:3rem}.dashboard-header h2{font-family:var(--font-heading);font-size:2.5rem;color:var(--primary-color)}.dashboard-grid{display:grid;grid-template-columns:1fr;gap:2.5rem}@media (min-width:768px){.dashboard-grid{grid-template-columns:1.5fr 1fr;grid-template-areas:"invoice-generator profile" "upgrade upgrade"}#invoice-generator-card{grid-area:invoice-generator}#profile-card{grid-area:profile}#upgrade-section{grid-area:upgrade}}@media (min-width:992px){.dashboard-grid{grid-template-columns:1.5fr 1fr 1fr;grid-template-areas:"invoice-generator profile upgrade"}}#profile-card p{font-size:1.05rem;margin-bottom:.8rem}#profile-card strong{color:var(--primary-color)}#profile-card .cta-button{margin-top:1.5rem}#upgrade-section h3{font-family:var(--font-heading);font-size:1.8rem;color:var(--primary-color);margin-bottom:1rem}#upgrade-section p{font-size:1.1rem;color:var(--text-light);margin-bottom:2rem}.dark-mode #upgrade-section p{color:var(--text-dark)}.upgrade-plans-grid{display:flex;justify-content:center;gap:2rem;flex-wrap:wrap}.upgrade-plan-card{flex:1;min-width:280px;max-width:350px;background-color:var(--bg-light);border:1px solid var(--border-color-light);border-radius:12px;padding:1.5rem;text-align:center;box-shadow:0 4px 15px rgba(0,0,0,.05);transition:transform .2s ease,box-shadow .2s ease}.dark-mode .upgrade-plan-card{background-color:#3b4e61;border-color:var(--border-color-dark);box-shadow:0 4px 15px rgba(0,0,0,.2)}.upgrade-plan-card:hover{transform:translateY(-5px);box-shadow:0 8px 20px rgba(0,0,0,.1)}.upgrade-plan-card h4{font-family:var(--font-heading);font-size:1.5rem;color:var(--primary-color);margin-bottom:.5rem}.upgrade-price{font-size:2.2rem;font-weight:700;color:var(--text-light);margin-bottom:1rem}.dark-mode .upgrade-price{color:var(--text-dark)}.upgrade-price span{font-size:1.2rem;vertical-align:super;color:var(--secondary-color);font-weight:500}.upgrade-features{list-style:none;padding:0;margin-bottom:1.5rem;text-align:left}.upgrade-features li{font-size:.95rem;margin-bottom:.5rem;color:var(--text-light);display:flex;align-items:center}.dark-mode .upgrade-features li{color:var(--text-dark)}.upgrade-features li svg{width:18px;height:18px;margin-right:8px;color:var(--success-color);flex-shrink:0}.select-upgrade-plan-btn{width:100%;padding:12px 20px}@media (max-width:992px){.auth-wrapper{flex-direction:column;max-width:600px}.auth-branding,.auth-container{width:100%;padding:30px}.auth-branding{display:none}#auth-section{margin-top:2rem}#hero-section h1{font-size:2.5rem}#hero-section p{font-size:1.1rem}.hero-buttons .cta-button{padding:15px 25px;font-size:1rem;margin:.5rem .5rem}main{margin-top:6rem}.section-container h2{font-size:2.2rem}.section-description{font-size:1rem}.pricing-cards-container{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}.pricing-card{padding:2rem 1.5rem}.pricing-card .price-value{font-size:3rem}}@media (max-width:576px){header{padding:.8rem 1rem}.logo-title{font-size:1.4rem}.auth-container h3{font-size:1.8rem}input,textarea,.auth-button,.cta-button{padding:12px 15px;font-size:.95rem}.hero-buttons{flex-direction:column}.hero-buttons .cta-button{margin:.5rem 0;width:80%}.section-container{padding:3rem 1rem}.section-container h2{font-size:2rem}.section-description{font-size:.9rem;margin-bottom:2rem}.pricing-toggle{width:100%;border-radius:8px;padding:3px}.toggle-button{padding:10px 15px;font-size:.9rem}.pricing-cards-container{gap:1.5rem}.pricing-card{padding:1.5rem 1rem}.pricing-card h3{font-size:1.6rem}.pricing-card .price-value{font-size:2.8rem}.pricing-card .currency-symbol,.pricing-card .price-period{font-size:1.2rem}.pricing-card .features-list li{font-size:.9rem}.dashboard-grid{gap:1.5rem}#profile-card{padding:1.5rem}#upgrade-section{padding:1.5rem}.upgrade-plans-grid{flex-direction:column;align-items:center}.upgrade-plan-card{width:90%;max-width:320px}}
+    </style>
+</head>
+<body class="light-mode">
+
+    <header>
+        <nav>
+            <h1 class="logo-title">Global Invoice AI</h1>
+            <div>
+                <button id="dark-mode-toggle" aria-label="Toggle Dark Mode">🌓</button>
+                <button id="sign-out-btn" class="cta-button" style="display: none; padding: 8px 12px; width: auto; margin-left: 1rem;">Sign Out</button>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <!-- This wrapper will be shown to logged-out users -->
+        <div id="landing-page-wrapper" style="display: none;">
+            <section id="hero-section">
+                <h1>Effortless Invoicing, Powered by AI.</h1>
+                <p>Create professional invoices in seconds, manage clients, and track payments with intelligent automation. Simplify your business finances.</p>
+                <div class="hero-buttons">
+                    <button id="get-started-btn" class="cta-button">Get Started Free</button>
+                    <button id="learn-more-btn" class="cta-button secondary-cta">Learn More</button>
+                </div>
+            </section>
+        
+            <section id="pricing-section" class="section-container">
+                <h2>Flexible Plans for Every Business</h2>
+                <p class="section-description">Choose the plan that fits your invoicing needs. Upgrade anytime.</p>
+                <div class="pricing-cards-container">
+                    <!-- FREE PLAN -->
+                    <div class="pricing-card">
+                        <h3>Free</h3>
+                        <p class="price-value"><span class="currency-symbol">$</span>0<span class="price-period">/month</span></p>
+                        <p class="price-description">Perfect for light users getting started.</p>
+                        <ul class="features-list">
+                            <li><svg class="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> 5 Invoices/month</li>
+                            <li><svg class="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Basic PDF Export</li>
+                            <li class="faded-feature"><svg class="x-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg> AI Suggestions</li>
+                        </ul>
+                        <button class="cta-button plan-button" data-plan="free">Start Free</button>
+                    </div>
+                    <!-- PRO PLAN -->
+                    <div class="pricing-card primary-plan">
+                        <span class="badge recommended-badge">Recommended</span>
+                        <h3>Pro</h3>
+                        <p class="price-value"><span class="currency-symbol">$</span><span class="price-monthly">9</span><span class="price-period">/month</span></p>
+                        <p class="price-description">Grow your business with advanced features.</p>
+                        <ul class="features-list">
+                            <li><svg class="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> 50 Invoices/month</li>
+                            <li><svg class="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> AI Suggestions</li>
+                            <li><svg class="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Email Support</li>
+                        </ul>
+                        <button class="cta-button plan-button" data-plan="pro">Choose Pro</button>
+                    </div>
+                    <!-- ADVANCED PLAN -->
+                    <div class="pricing-card">
+                        <h3>Advanced</h3>
+                        <p class="price-value"><span class="currency-symbol">$</span><span class="price-monthly">19</span><span class="price-period">/month</span></p>
+                        <p class="price-description">For large businesses and agencies.</p>
+                        <ul class="features-list">
+                            <li><svg class="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Unlimited Invoices</li>
+                            <li><svg class="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Custom Branding</li>
+                            <li><svg class="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Priority Support</li>
+                        </ul>
+                        <button class="cta-button plan-button" data-plan="advanced">Choose Advanced</button>
+                    </div>
+                </div>
+            </section>
+        
+            <section id="auth-section">
+                <div class="auth-wrapper">
+                    <div class="auth-branding">
+                        <h2>Simplify Your Invoicing</h2>
+                        <p>Go from draft to paid, faster. Create professional, compliant invoices in seconds with the power of AI.</p>
+                    </div>
+                    <div class="auth-container">
+                        <h3>Sign In or Sign Up</h3>
+                        <button id="google-signin-btn" class="auth-button google">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" class="google-icon"/>
+                            Continue with Google
+                        </button>
+                        <div class="divider">OR</div>
+                        <input type="email" id="email-input" placeholder="Enter your email" required>
+                        <button id="sign-in-email-btn" class="auth-button primary">Continue with Email</button>
+                        <p id="auth-message" class="message"></p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- This wrapper will be shown to logged-in users -->
+        <div id="dashboard-wrapper" style="display: none;">
+            <section id="dashboard-section">
+                <div class="dashboard-header">
+                    <h2 id="welcome-message">Welcome!</h2>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="card" id="profile-card">
+                        <h3>Your Profile</h3>
+                        <p><strong>Email:</strong> <span id="profile-email"></span></p>
+                        <p><strong>Current Plan:</strong> <span id="profile-plan"></span></p>
+                        <p><strong>Invoices This Month:</strong> <span id="profile-invoice-count"></span></p>
+                        <button id="manage-profile-btn" class="cta-button outline-button" style="width: auto;">Manage Subscription</button>
+                    </div>
+        
+                    <div class="card" id="invoice-generator-card">
+                        <h3>Create New Invoice</h3>
+                        <form id="invoice-form">
+                            <input type="text" id="client-name" name="client_name" placeholder="Client Name" required>
+                            <input type="email" id="client-email" name="client_email" placeholder="Client Email" required>
+                            <textarea id="item-description" name="item_description" placeholder="Item Description (e.g., Web Design Services)" required></textarea>
+                            <div class="form-row" style="display: flex; gap: 1rem;">
+                                <input type="number" id="quantity" name="quantity" placeholder="Quantity" required min="1">
+                                <input type="number" id="unit-price" name="unit_price" placeholder="Unit Price" required min="0" step="0.01">
+                            </div>
+                            <div class="form-row" style="display: flex; gap: 1rem;">
+                                <input type="text" id="currency" name="currency" value="USD">
+                                <input type="number" id="tax-rate" name="tax_rate" placeholder="Tax Rate (%)" min="0">
+                            </div>
+                            <label for="due-date">Due Date:</label>
+                            <input type="date" id="due-date" name="due_date" required>
+                            <button type="submit" id="generate-invoice-btn" class="cta-button">Generate & Download PDF</button>
+                        </form>
+                        <p id="invoice-message" class="message"></p>
+                    </div>
+        
+                    <div class="card" id="upgrade-section">
+                        <h3>Upgrade Your Plan</h3>
+                        <p>Unlock more features and higher invoice limits!</p>
+                        <div class="upgrade-plans-grid">
+                            <div class="upgrade-plan-card">
+                                <h4>Pro Plan</h4>
+                                <p class="upgrade-price">$<span class="upgrade-monthly-pro">9</span>/month</p>
+                                <ul class="upgrade-features">
+                                    <li>Up to 50 invoices/month</li>
+                                    <li>AI Suggestions</li>
+                                </ul>
+                                <button class="cta-button select-upgrade-plan-btn" data-plan="pro" data-price-id="YOUR_PRO_PLAN_PRICE_ID">Upgrade to Pro</button>
+                            </div>
+                            <div class="upgrade-plan-card">
+                                <h4>Advanced Plan</h4>
+                                <p class="upgrade-price">$<span class="upgrade-monthly-advanced">19</span>/month</p>
+                                <ul class="upgrade-features">
+                                    <li>Unlimited Invoices</li>
+                                    <li>Priority Support</li>
+                                </ul>
+                                <button class="cta-button select-upgrade-plan-btn" data-plan="advanced" data-price-id="YOUR_ADVANCED_PLAN_PRICE_ID">Upgrade to Advanced</button>
+                            </div>
+                        </div>
+                        <p id="upgrade-message" class="message"></p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+    
+    <script>
+        // === CONFIGURATION ===
+        const SUPABASE_URL = 'https://gjpzbbpgqzqbmoomygjy.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqcHpiYnBncXpxYm1vb215Z2p5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxMDcyMzUsImV4cCI6MjA2ODY4MzIzNX0.0EbdKvDPrHZiRWWFZkTFgV2O4l6xHc3arz0BwCmjA98';
+        const STRIPE_PUBLISHABLE_KEY = 'pk_test_YOUR_STRIPE_PUBLISHABLE_KEY'; // **IMPORTANT**: इसे अपनी Stripe Publishable Key से बदलें
+
+        // === INITIALIZATION ===
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+        window.jsPDF = window.jspdf.jsPDF;
+
+        // === DOM ELEMENTS ===
+        const landingPageWrapper = document.getElementById('landing-page-wrapper');
+        const dashboardWrapper = document.getElementById('dashboard-wrapper');
+        const signOutBtn = document.getElementById('sign-out-btn');
+        const googleSignInBtn = document.getElementById('google-signin-btn');
+        const signInEmailBtn = document.getElementById('sign-in-email-btn');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+
+        // === CORE UI LOGIC (The Fix) ===
+        const setupUI = (user) => {
+            if (user) {
+                // User is LOGGED IN
+                landingPageWrapper.style.display = 'none';
+                dashboardWrapper.style.display = 'block';
+                signOutBtn.style.display = 'block';
+                fetchAndDisplayUserData(user); // Fetch user's data for the dashboard
+            } else {
+                // User is LOGGED OUT
+                landingPageWrapper.style.display = 'block';
+                dashboardWrapper.style.display = 'none';
+                signOutBtn.style.display = 'none';
+            }
+        };
+
+        // === AUTHENTICATION HANDLERS ===
+        const handleGoogleSignIn = async () => { /* ... (same as before) ... */ };
+        const handleEmailSignIn = async () => { /* ... (same as before) ... */ };
+        const handleSignOut = async () => { /* ... (same as before) ... */ };
+        
+        // === DATA & DASHBOARD LOGIC ===
+        const fetchAndDisplayUserData = async (user) => { /* ... (same as before, but ensure elements are queried inside this function scope or globally) ... */ };
+        const handleInvoiceGeneration = async (e) => { /* ... (same as before) ... */ };
+        const generatePDF = (data, total) => { /* ... (same as before) ... */ };
+        const displayMessage = (element, text, type) => { /* ... (same as before) ... */ };
+        const toggleDarkMode = () => { /* ... (same as before) ... */ };
+        
+        // === STRIPE PAYMENT LOGIC ===
+        const handleUpgradePlan = async (event) => { /* ... (same as before, using Stripe) ... */ };
+
+        // === EVENT LISTENERS ===
+        document.addEventListener('DOMContentLoaded', () => {
+            // Landing page scroll buttons
+            document.getElementById('get-started-btn').addEventListener('click', () => document.getElementById('auth-section').scrollIntoView({ behavior: 'smooth' }));
+            document.getElementById('learn-more-btn').addEventListener('click', () => document.getElementById('pricing-section').scrollIntoView({ behavior: 'smooth' }));
+            document.querySelectorAll('.plan-button').forEach(button => button.addEventListener('click', () => document.getElementById('auth-section').scrollIntoView({ behavior: 'smooth' })));
+            
+            // Auth buttons
+            googleSignInBtn.addEventListener('click', handleGoogleSignIn);
+            signInEmailBtn.addEventListener('click', handleEmailSignIn);
+            signOutBtn.addEventListener('click', handleSignOut);
+            
+            // Theme toggle
+            darkModeToggle.addEventListener('click', toggleDarkMode);
+            
+            // Dashboard Listeners (can be attached here as the HTML exists)
+            document.getElementById('invoice-form').addEventListener('submit', handleInvoiceGeneration);
+            document.querySelectorAll('.select-upgrade-plan-btn').forEach(button => button.addEventListener('click', handleUpgradePlan));
+            document.getElementById('manage-profile-btn').addEventListener('click', async () => {
+                // This will call a backend function to create a Stripe Customer Portal session
+                alert("This will redirect to the Stripe Customer Portal to manage your subscription.");
+                // const { data, error } = await _supabase.functions.invoke('create-stripe-portal-session');
+                // if (data) window.location.href = data.url;
+            });
+
+            // Initial UI setup based on auth state
+            _supabase.auth.onAuthStateChange((_event, session) => {
+                setupUI(session ? session.user : null);
+            });
+
+            // Set initial theme
+            if (localStorage.getItem('theme') === 'dark') toggleDarkMode();
+        });
+
+    </script>
+
+</body>
+</html>
