@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Invoice AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+
+            /* Light Theme */
+            --background-color-light: #f8f9fa;
+            --surface-color-light: #ffffff;
+            --text-color-light: #343a40;
+            --border-color-light: #e9ecef;
+            --sidebar-bg-light: #ffffff;
+            --sidebar-text-light: #343a40;
+            --sidebar-hover-light: #f1f3f5;
+
+            /* Dark Theme */
+            --background-color-dark: #212529;
+            --surface-color-dark: #2c3034;
+            --text-color-dark: #dee2e6;
+            --border-color-dark: #495057;
+            --sidebar-bg-dark: #2c3034;
+            --sidebar-text-dark: #dee2e6;
+            --sidebar-hover-dark: #3a3f44;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: var(--background-color-light);
+            color: var(--text-color-light);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: var(--background-color-dark);
+            color: var(--text-color-dark);
+        }
+
+        /* Utility Classes */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-outline-primary {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .card {
+            background-color: var(--surface-color-light);
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        body.dark-mode .card {
+            background-color: var(--surface-color-dark);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="email"],
+        input[type="password"],
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color-light);
+            border-radius: 5px;
+            box-sizing: border-box;
+            background-color: var(--background-color-light);
+            color: var(--text-color-light);
+            transition: border-color 0.3s, background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode input {
+            border-color: var(--border-color-dark);
+            background-color: var(--surface-color-dark);
+            color: var(--text-color-dark);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+
+        /* Welcome Section */
+        #welcome-section {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary-color), #00d4ff);
+            color: white;
+        }
+
+        #welcome-section h1 {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        #welcome-section p {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            max-width: 700px;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--text-color-light);
+            background-color: var(--surface-color-light);
+            padding: 8px 12px;
+            border-radius: 50px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+
+        body.dark-mode .theme-toggle {
+            color: var(--text-color-dark);
+            background-color: var(--surface-color-dark);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* General Layout (for dashboard and other sections) */
+        .main-content {
+            display: flex;
+            min-height: calc(100vh - 80px); /* Adjust based on header/footer */
+            margin-top: 80px; /* Space for the top bar if any, or adjust to 0 */
+            transition: margin-left 0.3s ease;
+        }
+
+        .dashboard-layout {
+            display: none; /* Hidden by default, shown after login */
+            height: 100vh;
+            overflow: hidden; /* Prevent body scroll, content scrolls within sections */
+        }
+
+        .dashboard-layout.active {
+            display: flex;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg-light);
+            padding: 20px 0;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s ease, background-color 0.3s;
+            flex-shrink: 0; /* Prevent sidebar from shrinking */
+        }
+
+        body.dark-mode .sidebar {
+            background-color: var(--sidebar-bg-dark);
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar.collapsed {
+            width: 60px;
+        }
+
+        .sidebar-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 0 15px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: opacity 0.3s;
+        }
+
+        .sidebar.collapsed .sidebar-header h2 {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+        }
+
+        .sidebar-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav li a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: var(--sidebar-text-light);
+            text-decoration: none;
+            font-size: 1.1rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: background-color 0.3s, color 0.3s, padding 0.3s;
+        }
+
+        body.dark-mode .sidebar-nav li a {
+            color: var(--sidebar-text-dark);
+        }
+
+        .sidebar-nav li a:hover,
+        .sidebar-nav li a.active {
+            background-color: var(--sidebar-hover-light);
+            color: var(--primary-color);
+        }
+
+        body.dark-mode .sidebar-nav li a:hover,
+        body.dark-mode .sidebar-nav li a.active {
+            background-color: var(--sidebar-hover-dark);
+        }
+
+        .sidebar-nav li a i {
+            margin-right: 15px;
+            font-size: 1.3rem;
+            width: 25px; /* Fixed width for icons */
+            text-align: center;
+        }
+
+        .sidebar.collapsed .sidebar-nav li a span {
+            display: none;
+        }
+
+        .sidebar.collapsed .sidebar-nav li a {
+            justify-content: center;
+            padding: 12px 0;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: var(--sidebar-text-light);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 10px;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: none; /* Hidden on desktop, shown on mobile */
+        }
+
+        body.dark-mode .sidebar-toggle {
+            color: var(--sidebar-text-dark);
+        }
+
+        /* Dashboard Content */
+        .dashboard-content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto; /* Enable scrolling for dashboard content */
+            max-height: 100vh; /* Ensure content doesn't overflow viewport */
+        }
+
+        .dashboard-section {
+            display: none;
+        }
+
+        .dashboard-section.active {
+            display: block;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="theme-toggle" id="themeToggle">
+        <span class="icon">💡</span>
+    </div>
+
+    <section id="welcome-section">
+        <h1>🌐 Global Invoice AI</h1>
+        <p>Automated Invoicing + Smart Business Suite for Global Freelancers & SMEs</p>
+        <button class="btn btn-primary" id="getStartedBtn">Let’s Get Started</button>
+    </section>
+        <section id="auth-section" class="container" style="display: none; padding-top: 80px; padding-bottom: 80px;">
+        <div class="card" style="max-width: 500px; margin: 0 auto;">
+            <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+                <button class="btn btn-outline-primary" id="signUpTab" style="margin-right: 10px;">Sign Up</button>
+                <button class="btn btn-primary" id="signInTab">Sign In</button>
+            </div>
+
+            <div id="signUpForm" style="display: none;">
+                <h2>Sign Up</h2>
+                <input type="email" id="signUpEmail" placeholder="Email" required>
+                <input type="password" id="signUpPassword" placeholder="Password" required>
+                <input type="password" id="signUpConfirmPassword" placeholder="Confirm Password" required>
+                <button class="btn btn-primary" id="signUpBtn">Sign Up</button>
+                <button class="btn btn-outline-primary" id="sendOtpBtn">Send OTP</button>
+                <input type="text" id="otpInput" placeholder="Enter OTP (mock)" style="display: none;">
+                <button class="btn btn-primary" id="verifyOtpBtn" style="display: none;">Verify OTP</button>
+            </div>
+
+            <div id="signInForm">
+                <h2>Sign In</h2>
+                <input type="email" id="signInEmail" placeholder="Email" required>
+                <input type="password" id="signInPassword" placeholder="Password" required>
+                <button class="btn btn-primary" id="signInBtn">Sign In</button>
+                <p style="text-align: center; margin: 15px 0;">- OR -</p>
+                <button class="btn btn-outline-primary" id="googleSignInBtn" style="width: 100%;">Sign In with Google (Mock)</button>
+            </div>
+            <p id="authMessage" style="color: red; text-align: center; margin-top: 10px;"></p>
+        </div>
+        </section>
+            <div id="dashboard-layout" class="dashboard-layout">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>Global Invoice AI</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" data-section="invoice"><i class="fas fa-file-invoice"></i> <span>Invoice</span></a></li>
+                    <li><a href="#" data-section="crm"><i class="fas fa-users"></i> <span>CRM</span></a></li>
+                    <li><a href="#" data-section="hr"><i class="fas fa-user-tie"></i> <span>HR</span></a></li>
+                    <li><a href="#" data-section="accounting"><i class="fas fa-calculator"></i> <span>Accounting</span></a></li>
+                    <li><a href="#" data-section="inventory"><i class="fas fa-boxes"></i> <span>Inventory</span></a></li>
+                    <li><a href="#" data-section="pos"><i class="fas fa-cash-register"></i> <span>POS</span></a></li>
+                    <li><a href="#" data-section="ecommerce"><i class="fas fa-store"></i> <span>eCommerce</span></a></li>
+                    <li><a href="#" data-section="settings"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+                </ul>
+            </nav>
+            <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+        </div>
+
+        <div class="dashboard-content">
+            <div class="card" style="margin-bottom: 20px;">
+                <h3>Your Current Plan: <span id="currentPlan">Free Plan</span></h3>
+                <p>Invoices Used: <span id="invoicesUsed">0</span> / <span id="invoiceLimit">3</span></p>
+                <div style="background-color: var(--border-color-light); border-radius: 5px; height: 10px; margin-top: 10px;">
+                    <div id="invoiceProgressBar" style="width: 0%; background-color: var(--primary-color); height: 100%; border-radius: 5px;"></div>
+                </div>
+                <p style="margin-top: 10px;">Renewal Date: <span id="renewalDate">N/A</span></p>
+                <button class="btn btn-primary" id="upgradePlanBtn" style="margin-right: 10px;">Upgrade Plan</button>
+                <button class="btn btn-outline-primary" id="downgradePlanBtn">Downgrade Plan</button>
+            </div>
+
+            <section id="invoice-section" class="dashboard-section active">
+                <h2>Invoice Creator</h2>
+                <div class="card">
+                    <label for="clientName">Client Name:</label>
+                    <input type="text" id="clientName" placeholder="Client Name" required>
+
+                    <label for="clientEmail">Client Email:</label>
+                    <input type="email" id="clientEmail" placeholder="Client Email" required>
+
+                    <div id="invoiceItems">
+                        <h3>Items</h3>
+                        <div class="invoice-item-row" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <input type="text" class="item-name" placeholder="Item" style="flex: 3;" required>
+                            <input type="number" class="item-quantity" placeholder="Qty" min="1" value="1" style="flex: 1;" required>
+                            <input type="number" class="item-price" placeholder="Price" min="0" step="0.01" style="flex: 1.5;" required>
+                            <button class="btn btn-danger remove-item-btn" style="flex: 0.5;">-</button>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-primary" id="addItemBtn" style="margin-bottom: 20px;">Add Item</button>
+
+                    <p>Subtotal: <span id="subtotal">0.00</span></p>
+                    <p>Tax (10%): <span id="taxAmount">0.00</span></p>
+                    <h3>Total: <span id="totalAmount">0.00</span></h3>
+
+                    <button class="btn btn-primary" id="generatePdfBtn">Generate PDF</button>
+                    <button class="btn btn-success" id="saveInvoiceBtn">Save Invoice</button>
+                    <p id="invoiceMessage" style="color: green; margin-top: 10px;"></p>
+                </div>
+            </section>
+
+            <section id="crm-section" class="dashboard-section">
+                <h2>CRM Dashboard</h2>
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <h3>Leads Overview</h3>
+                        <div class="chart-container"><canvas id="leadsChart"></canvas></div>
+                    </div>
+                    <div class="card">
+                        <h3>Customer Acquisition</h3>
+                        <p>New Customers: <span class="kpi">15</span></p>
+                        <p>Conversion Rate: <span class="kpi">5%</span></p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="hr-section" class="dashboard-section">
+                <h2>HR Management</h2>
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <h3>Employee Count</h3>
+                        <p class="kpi">50</p>
+                    </div>
+                    <div class="card">
+                        <h3>Department Breakdown</h3>
+                        <div class="chart-container"><canvas id="departmentChart"></canvas></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="accounting-section" class="dashboard-section">
+                <h2>Accounting Overview</h2>
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <h3>Revenue (MTD)</h3>
+                        <p class="kpi">₹150,000</p>
+                    </div>
+                    <div class="card">
+                        <h3>Expenses (MTD)</h3>
+                        <p class="kpi">₹70,000</p>
+                    </div>
+                    <div class="card">
+                        <h3>Profitability Trend</h3>
+                        <div class="chart-container"><canvas id="profitChart"></canvas></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="inventory-section" class="dashboard-section">
+                <h2>Inventory Management</h2>
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <h3>Stock Value</h3>
+                        <p class="kpi">₹500,000</p>
+                    </div>
+                    <div class="card">
+                        <h3>Low Stock Alerts</h3>
+                        <p class="kpi">12 items</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="pos-section" class="dashboard-section">
+                <h2>Point of Sale</h2>
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <h3>Daily Sales</h3>
+                        <p class="kpi">₹25,000</p>
+                    </div>
+                    <div class="card">
+                        <h3>Transactions</h3>
+                        <p class="kpi">120</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="ecommerce-section" class="dashboard-section">
+                <h2>eCommerce Analytics</h2>
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <h3>Online Orders</h3>
+                        <p class="kpi">85</p>
+                    </div>
+                    <div class="card">
+                        <h3>Conversion Rate</h3>
+                        <p class="kpi">2.5%</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="settings-section" class="dashboard-section">
+                <h2>Settings</h2>
+                <div class="card">
+                    <h3>User Profile</h3>
+                    <p>Logged in as: <span id="loggedInUserEmail">N/A</span></p>
+                    <button class="btn btn-outline-primary" id="logoutBtn">Logout</button>
+                </div>
+                <div class="card">
+                    <h3>Branding Settings</h3>
+                    <p>Customize your PDF watermark (Pro/Advance Plan only)</p>
+                    <input type="text" id="customWatermark" placeholder="Custom Watermark Text" disabled>
+                    <button class="btn btn-secondary" id="saveBrandingBtn" disabled>Save Branding</button>
+                </div>
+            </section>
+        </div>
+            </div>
+                <style>
+        /* Subscription Model Styling */
+        .subscription-plans {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+
+        .plan-card {
+            border: 1px solid var(--border-color-light);
+            border-radius: 8px;
+            padding: 25px;
+            text-align: center;
+            background-color: var(--surface-color-light);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .plan-card {
+            border-color: var(--border-color-dark);
+            background-color: var(--surface-color-dark);
+        }
+
+        .plan-card.pro { border-color: var(--primary-color); }
+        .plan-card.advance { border-color: var(--success-color); }
+        .plan-card.current {
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 6px 12px rgba(0, 123, 255, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .plan-card h4 {
+            font-size: 1.8rem;
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .plan-card .price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-color-light);
+        }
+
+        body.dark-mode .plan-card .price {
+            color: var(--text-color-dark);
+        }
+
+        .plan-card .price span {
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        .plan-card ul {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+            margin-bottom: 25px;
+        }
+
+        .plan-card ul li {
+            margin-bottom: 10px;
+            color: var(--text-color-light);
+        }
+        body.dark-mode .plan-card ul li {
+            color: var(--text-color-dark);
+        }
+
+        .plan-card ul li i {
+            margin-right: 8px;
+            color: var(--success-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            #welcome-section h1 {
+                font-size: 2.5rem;
+            }
+            #welcome-section p {
+                font-size: 1.2rem;
+                padding: 0 20px;
+            }
+
+            #auth-section .card {
+                padding: 15px;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: -250px;
+                height: 100%;
+                z-index: 999;
+                box-shadow: 5px 0 10px rgba(0, 0, 0, 0.2);
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .sidebar.collapsed { /* On mobile, if active, it's full width or not visible */
+                width: 250px; /* Keep full width when active on mobile */
+            }
+
+            .sidebar-toggle {
+                display: block;
+                position: fixed; /* Keep toggle button fixed */
+                left: 20px;
+                top: 20px;
+                background-color: var(--surface-color-light);
+                padding: 10px 15px;
+                border-radius: 5px;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            }
+
+            body.dark-mode .sidebar-toggle {
+                background-color: var(--surface-color-dark);
+            }
+
+            .dashboard-content {
+                margin-left: 0; /* No margin on mobile */
+                padding-top: 60px; /* Space for toggle button */
+            }
+
+            .dashboard-layout.active .dashboard-content {
+                /* When sidebar is active, content might be pushed or overlaid */
+                /* For simplicity, we'll let sidebar overlay content */
+            }
+
+            .sidebar-header h2 {
+                white-space: normal; /* Allow wrap */
+                overflow: visible;
+                text-overflow: clip;
+            }
+
+            .sidebar.collapsed .sidebar-header h2 {
+                opacity: 1; /* Always show title on mobile when sidebar is open */
+                width: auto;
+            }
+            .sidebar.collapsed .sidebar-nav li a span {
+                display: inline; /* Always show text on mobile when sidebar is open */
+            }
+            .sidebar.collapsed .sidebar-nav li a {
+                justify-content: flex-start;
+                padding: 12px 20px;
+            }
+        }
+
+        /* Responsive Invoice Creator */
+        @media (max-width: 600px) {
+            .invoice-item-row {
+                flex-direction: column;
+                gap: 5px;
+            }
+            .invoice-item-row input,
+            .invoice-item-row button {
+                width: 100%;
+                flex: none;
+            }
+        }
+                </style>
+                    <script>
+        // Supabase Client Initialization
+        const SUPABASE_URL = 'https://gjpzbbpgqzqbmoomygjy.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqcHpiYnBncXpxYm1vb215Z2p5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxMDcyMzUsImexhcCI6MjA2ODY4MzIzNX0.0EbdKvDPrHZiRWWFZkTFgV2O4l6xHc3arz0BwCmjA98';
+        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // UI Element References
+        const welcomeSection = document.getElementById('welcome-section');
+        const getStartedBtn = document.getElementById('getStartedBtn');
+        const authSection = document.getElementById('auth-section');
+        const signUpTab = document.getElementById('signUpTab');
+        const signInTab = document.getElementById('signInTab');
+        const signUpForm = document.getElementById('signUpForm');
+        const signInForm = document.getElementById('signInForm');
+        const signUpBtn = document.getElementById('signUpBtn');
+        const signInBtn = document.getElementById('signInBtn');
+        const googleSignInBtn = document.getElementById('googleSignInBtn');
+        const authMessage = document.getElementById('authMessage');
+
+        const dashboardLayout = document.getElementById('dashboard-layout');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const navLinks = document.querySelectorAll('.sidebar-nav a');
+        const dashboardSections = document.querySelectorAll('.dashboard-section');
+
+        const themeToggle = document.getElementById('themeToggle');
+
+        // Invoice Creator Elements
+        const invoiceItems = document.getElementById('invoiceItems');
+        const addItemBtn = document.getElementById('addItemBtn');
+        const subtotalSpan = document.getElementById('subtotal');
+        const taxAmountSpan = document.getElementById('taxAmount');
+        const totalAmountSpan = document.getElementById('totalAmount');
+        const generatePdfBtn = document.getElementById('generatePdfBtn');
+        const saveInvoiceBtn = document.getElementById('saveInvoiceBtn');
+        const invoiceMessage = document.getElementById('invoiceMessage');
+        const clientNameInput = document.getElementById('clientName');
+        const clientEmailInput = document.getElementById('clientEmail');
+
+        // OTP Elements
+        const sendOtpBtn = document.getElementById('sendOtpBtn');
+        const otpInput = document.getElementById('otpInput');
+        const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+        const signUpEmail = document.getElementById('signUpEmail');
+
+        // Subscription Elements
+        const currentPlanSpan = document.getElementById('currentPlan');
+        const invoicesUsedSpan = document.getElementById('invoicesUsed');
+        const invoiceLimitSpan = document.getElementById('invoiceLimit');
+        const invoiceProgressBar = document.getElementById('invoiceProgressBar');
+        const renewalDateSpan = document.getElementById('renewalDate');
+        const upgradePlanBtn = document.getElementById('upgradePlanBtn');
+        const downgradePlanBtn = document.getElementById('downgradePlanBtn');
+        const customWatermarkInput = document.getElementById('customWatermark');
+        const saveBrandingBtn = document.getElementById('saveBrandingBtn');
+        const loggedInUserEmailSpan = document.getElementById('loggedInUserEmail');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // Global state for current user and plan
+        let currentUser = null;
+        let userPlan = 'Free'; // Default plan
+        let invoicesMade = 0;
+        let invoiceLimit = 3;
+
+        // --- Functions ---
+
+        // Scroll to Auth Section
+        getStartedBtn.addEventListener('click', () => {
+            authSection.style.display = 'block';
+            authSection.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // Theme Toggle
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const icon = themeToggle.querySelector('.icon');
+            icon.textContent = document.body.classList.contains('dark-mode') ? '🌙' : '💡';
+        });
+
+        // Auth Tab Toggle
+        signUpTab.addEventListener('click', () => {
+            signUpForm.style.display = 'block';
+            signInForm.style.display = 'none';
+            signUpTab.classList.remove('btn-outline-primary');
+            signUpTab.classList.add('btn-primary');
+            signInTab.classList.remove('btn-primary');
+            signInTab.classList.add('btn-outline-primary');
+            authMessage.textContent = '';
+        });
+
+        signInTab.addEventListener('click', () => {
+            signUpForm.style.display = 'none';
+            signInForm.style.display = 'block';
+            signInTab.classList.remove('btn-outline-primary');
+            signInTab.classList.add('btn-primary');
+            signUpTab.classList.remove('btn-primary');
+            signUpTab.classList.add('btn-outline-primary');
+            authMessage.textContent = '';
+        });
+
+        // Mock OTP Logic
+        sendOtpBtn.addEventListener('click', () => {
+            const email = signUpEmail.value;
+            if (!email) {
+                authMessage.textContent = 'Please enter an email address.';
+                return;
+            }
+            authMessage.textContent = `OTP sent to ${email} (mock)`;
+            otpInput.style.display = 'block';
+            verifyOtpBtn.style.display = 'inline-block';
+            sendOtpBtn.disabled = true;
+            // In a real app, you'd send an actual OTP here
+        });
+
+        verifyOtpBtn.addEventListener('click', () => {
+            const otp = otpInput.value;
+            if (otp === '123456') { // Mock OTP
+                authMessage.textContent = 'OTP Verified! You can now sign up.';
+                signUpBtn.disabled = false;
+                otpInput.disabled = true;
+                verifyOtpBtn.disabled = true;
+            } else {
+                authMessage.textContent = 'Invalid OTP. Try again.';
+            }
+        });
+
+        // Supabase Authentication (Mock/Placeholder)
+        signUpBtn.addEventListener('click', async () => {
+            const email = document.getElementById('signUpEmail').value;
+            const password = document.getElementById('signUpPassword').value;
+            const confirmPassword = document.getElementById('signUpConfirmPassword').value;
+
+            if (password !== confirmPassword) {
+                authMessage.textContent = 'Passwords do not match.';
+                return;
+            }
+
+            if (!email || !password) {
+                authMessage.textContent = 'Please fill in all fields.';
+                return;
+            }
+
+            try {
+                // In a real app, you'd use supabase.auth.signUp()
+                // For this mock, we'll simulate a successful signup
+                authMessage.textContent = 'Signing up... (mock)';
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+
+                const { data, error } = await supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            plan: 'Free' // Assign default Free plan on signup
+                        }
+                    }
+                });
+
+                if (error) {
+                    throw error;
+                }
+
+                if (data.user) {
+                    currentUser = data.user;
+                    // Insert into users table
+                    await supabase.from('users').insert([{ id: currentUser.id, email: currentUser.email, plan: 'Free', signup_date: new Date().toISOString() }]);
+                    // Insert into subscriptions table
+                    await supabase.from('subscriptions').insert([{ user_id: currentUser.id, plan: 'Free', start_date: new Date().toISOString(), end_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(), invoice_count: 0 }]);
+
+                    authMessage.textContent = 'Sign up successful! Please check your email to confirm.';
+                    showDashboard();
+                } else {
+                    authMessage.textContent = 'Sign up failed. Please try again.';
+                }
+
+            } catch (error) {
+                authMessage.textContent = `Sign up error: ${error.message}`;
+                console.error('Sign up error:', error);
+            }
+        });
+
+        signInBtn.addEventListener('click', async () => {
+            const email = document.getElementById('signInEmail').value;
+            const password = document.getElementById('signInPassword').value;
+
+            if (!email || !password) {
+                authMessage.textContent = 'Please fill in all fields.';
+                return;
+            }
+
+            try {
+                // In a real app, you'd use supabase.auth.signInWithPassword()
+                authMessage.textContent = 'Signing in... (mock)';
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                });
+
+                if (error) {
+                    throw error;
+                }
+
+                if (data.user) {
+                    currentUser = data.user;
+                    authMessage.textContent = 'Sign in successful!';
+                    await loadUserProfileAndSubscription();
+                    showDashboard();
+                } else {
+                    authMessage.textContent = 'Sign in failed. Invalid credentials.';
+                }
+
+            } catch (error) {
+                authMessage.textContent = `Sign in error: ${error.message}`;
+                console.error('Sign in error:', error);
+            }
+        });
+
+        googleSignInBtn.addEventListener('click', () => {
+            authMessage.textContent = 'Google Sign-In Clicked (Mock)';
+            // In a real app, you'd use supabase.auth.signInWithOAuth({ provider: 'google' })
+            // For now, just simulate a successful login for demonstration
+            setTimeout(() => {
+                currentUser = { id: 'mock-google-user-123', email: 'mock.google@example.com' }; // Simulate user
+                userPlan = 'Pro'; // Simulate a user with Pro plan for Google login mock
+                invoicesMade = 10;
+                invoiceLimit = 50;
+                authMessage.textContent = 'Signed in with Google (mock)!';
+                updateSubscriptionDisplay();
+                showDashboard();
+            }, 1000);
+        });
+
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                const { error } = await supabase.auth.signOut();
+                if (error) throw error;
+                currentUser = null;
+                authMessage.textContent = 'Logged out successfully.';
+                dashboardLayout.classList.remove('active');
+                welcomeSection.style.display = 'flex';
+                authSection.style.display = 'none';
+                document.getElementById('signInEmail').value = '';
+                document.getElementById('signInPassword').value = '';
+                console.log('User logged out.');
+            } catch (error) {
+                console.error('Logout error:', error.message);
+            }
+        });
+
+        // Function to show the dashboard and hide other sections
+        function showDashboard() {
+            welcomeSection.style.display = 'none';
+            authSection.style.display = 'none';
+            dashboardLayout.classList.add('active');
+            loggedInUserEmailSpan.textContent = currentUser ? currentUser.email : 'N/A';
+            // Set initial active tab
+            document.querySelector('.sidebar-nav a[data-section="invoice"]').classList.add('active');
+            document.getElementById('invoice-section').classList.add('active');
+            updateSubscriptionDisplay(); // Update subscription info on dashboard load
+            // Hide sidebar on mobile initially
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('active');
+            }
+        }
+
+        // Check if user is already logged in on page load
+        async function checkUserSession() {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error) throw error;
+
+                if (session) {
+                    currentUser = session.user;
+                    await loadUserProfileAndSubscription();
+                    showDashboard();
+                } else {
+                    welcomeSection.style.display = 'flex';
+                }
+            } catch (error) {
+                console.error('Error checking session:', error.message);
+                welcomeSection.style.display = 'flex'; // Show welcome if error or no session
+            }
+        }
+
+        // Load user plan and invoice count from Supabase
+        async function loadUserProfileAndSubscription() {
+            if (!currentUser) return;
+
+            try {
+                // Fetch user's plan from 'users' table (might be redundant if 'subscriptions' is primary source)
+                const { data: userData, error: userError } = await supabase
+                    .from('users')
+                    .select('plan')
+                    .eq('id', currentUser.id)
+                    .single();
+
+                if (userError && userError.code !== 'PGRST116') throw userError; // Ignore "no rows found" if user just signed up
+
+                if (userData) {
+                    userPlan = userData.plan;
+                }
+
+                // Fetch subscription details
+                const { data: subData, error: subError } = await supabase
+                    .from('subscriptions')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .single();
+
+                if (subError && subError.code !== 'PGRST116') throw subError; // Ignore "no rows found"
+
+                if (subData) {
+                    userPlan = subData.plan; // Ensure plan is from subscription table
+                    invoicesMade = subData.invoice_count;
+                    // Determine limit based on plan
+                    if (userPlan === 'Free') {
+                        invoiceLimit = 3;
+                    } else if (userPlan === 'Pro') {
+                        invoiceLimit = 50;
+                    } else { // Advance
+                        invoiceLimit = Infinity;
+                    }
+                    renewalDateSpan.textContent = new Date(subData.end_date).toLocaleDateString();
+                } else {
+                    // If no subscription data, default to Free plan with initial settings
+                    userPlan = 'Free';
+                    invoicesMade = 0;
+                    invoiceLimit = 3;
+                    // Create a default subscription entry if none exists (e.g., for migrated users)
+                    await supabase.from('subscriptions').insert([{ user_id: currentUser.id, plan: 'Free', start_date: new Date().toISOString(), end_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(), invoice_count: 0 }]);
+                    renewalDateSpan.textContent = new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString();
+                }
+
+                updateSubscriptionDisplay();
+                applyPlanRestrictions();
+
+            } catch (error) {
+                console.error('Error loading user profile or subscription:', error.message);
+                // Fallback to default free plan if fetching fails
+                userPlan = 'Free';
+                invoicesMade = 0;
+                invoiceLimit = 3;
+                updateSubscriptionDisplay();
+                applyPlanRestrictions();
+            }
+        }
+
+        function updateSubscriptionDisplay() {
+            currentPlanSpan.textContent = userPlan + ' Plan';
+            invoicesUsedSpan.textContent = invoicesMade;
+            invoiceLimitSpan.textContent = invoiceLimit === Infinity ? 'Unlimited' : invoiceLimit;
+
+            let progress = (invoicesMade / invoiceLimit) * 100;
+            if (invoiceLimit === Infinity) progress = 0; // No progress bar for unlimited
+            invoiceProgressBar.style.width = `${Math.min(progress, 100)}%`;
+            invoiceProgressBar.style.backgroundColor = progress >= 80 ? var_danger_color : var_primary_color;
+
+            if (invoicesMade >= invoiceLimit && invoiceLimit !== Infinity) {
+                invoiceMessage.textContent = 'Invoice limit reached for your plan! Please upgrade.';
+                generatePdfBtn.disabled = true;
+                saveInvoiceBtn.disabled = true;
+            } else {
+                invoiceMessage.textContent = '';
+                generatePdfBtn.disabled = false;
+                saveInvoiceBtn.disabled = false;
+            }
+        }
+
+        function applyPlanRestrictions() {
+            // CRM, HR, Accounting access
+            const crmSection = document.getElementById('crm-section');
+            const hrSection = document.getElementById('hr-section');
+            const accountingSection = document.getElementById('accounting-section');
+            const inventorySection = document.getElementById('inventory-section');
+            const posSection = document.getElementById('pos-section');
+            const ecommerceSection = document.getElementById('ecommerce-section');
+
+            const toggleFeatureAccess = (section, enabled) => {
+                section.style.opacity = enabled ? '1' : '0.5';
+                section.style.pointerEvents = enabled ? 'auto' : 'none';
+                section.title = enabled ? '' : 'Upgrade to Pro/Advance to unlock';
+            };
+
+            toggleFeatureAccess(crmSection, userPlan !== 'Free');
+            toggleFeatureAccess(hrSection, userPlan !== 'Free');
+            toggleFeatureAccess(accountingSection, userPlan !== 'Free');
+            toggleFeatureAccess(inventorySection, userPlan === 'Advance');
+            toggleFeatureAccess(posSection, userPlan === 'Advance');
+            toggleFeatureAccess(ecommerceSection, userPlan === 'Advance');
+
+
+            // PDF customization
+            const pdfCustomizationEnabled = (userPlan === 'Pro' || userPlan === 'Advance');
+            customWatermarkInput.disabled = !pdfCustomizationEnabled;
+            saveBrandingBtn.disabled = !pdfCustomizationEnabled;
+            customWatermarkInput.placeholder = pdfCustomizationEnabled ? "Custom Watermark Text" : "Upgrade for PDF customization";
+        }
+
+
+        // Sidebar Toggle for Mobile
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+
+        // Dashboard Tab Switching
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                navLinks.forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+
+                const targetSectionId = this.dataset.section + '-section';
+                dashboardSections.forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(targetSectionId).classList.add('active');
+
+                // On mobile, collapse sidebar after selection
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.remove('active');
+                }
+            });
+        });
+
+        // Invoice Creator Logic
+        function calculateInvoiceTotals() {
+            let currentSubtotal = 0;
+            document.querySelectorAll('.invoice-item-row').forEach(row => {
+                const quantity = parseFloat(row.querySelector('.item-quantity').value) || 0;
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                currentSubtotal += quantity * price;
+            });
+            const tax = currentSubtotal * 0.10; // 10% tax
+            const total = currentSubtotal + tax;
+
+            subtotalSpan.textContent = currentSubtotal.toFixed(2);
+            taxAmountSpan.textContent = tax.toFixed(2);
+            totalAmountSpan.textContent = total.toFixed(2);
+        }
+
+        addItemBtn.addEventListener('click', () => {
+            const newItemRow = document.createElement('div');
+            newItemRow.classList.add('invoice-item-row');
+            newItemRow.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px;';
+            newItemRow.innerHTML = `
+                <input type="text" class="item-name" placeholder="Item" style="flex: 3;" required>
+                <input type="number" class="item-quantity" placeholder="Qty" min="1" value="1" style="flex: 1;" required>
+                <input type="number" class="item-price" placeholder="Price" min="0" step="0.01" style="flex: 1.5;" required>
+                <button class="btn btn-danger remove-item-btn" style="flex: 0.5;">-</button>
+            `;
+            invoiceItems.appendChild(newItemRow);
+            newItemRow.querySelector('.remove-item-btn').addEventListener('click', (e) => {
+                e.target.closest('.invoice-item-row').remove();
+                calculateInvoiceTotals();
+            });
+            newItemRow.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', calculateInvoiceTotals);
+            });
+            calculateInvoiceTotals();
+        });
+
+        // Initial calculation for default item
+        document.querySelectorAll('.invoice-item-row input').forEach(input => {
+            input.addEventListener('input', calculateInvoiceTotals);
+        });
+        calculateInvoiceTotals(); // Call once on load
+
+        // jsPDF Integration (Mock)
+        generatePdfBtn.addEventListener('click', () => {
+            if (invoicesMade >= invoiceLimit && invoiceLimit !== Infinity) {
+                invoiceMessage.textContent = 'Invoice limit reached for your plan! Cannot generate PDF.';
+                return;
+            }
+
+            // window.jsPDF is available from the CDN
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const clientName = clientNameInput.value || 'N/A';
+            const clientEmail = clientEmailInput.value || 'N/A';
+            const subtotal = subtotalSpan.textContent;
+            const tax = taxAmountSpan.textContent;
+            const total = totalAmountSpan.textContent;
+            const watermarkText = customWatermarkInput.value || 'Generated by Global Invoice AI';
+
+            doc.setFontSize(22);
+            doc.text("Global Invoice AI - Invoice", 10, 20);
+
+            doc.setFontSize(12);
+            doc.text(`Client Name: ${clientName}`, 10, 40);
+            doc.text(`Client Email: ${clientEmail}`, 10, 50);
+
+            let y = 70;
+            doc.text("Items:", 10, y);
+            y += 10;
+            document.querySelectorAll('.invoice-item-row').forEach(row => {
+                const item = row.querySelector('.item-name').value || 'N/A';
+                const qty = row.querySelector('.item-quantity').value || '0';
+                const price = row.querySelector('.item-price').value || '0.00';
+                doc.text(`- ${item} (Qty: ${qty}, Price: $${parseFloat(price).toFixed(2)})`, 15, y);
+                y += 7;
+            });
+
+            y += 10;
+            doc.text(`Subtotal: $${subtotal}`, 10, y);
+            y += 7;
+            doc.text(`Tax (10%): $${tax}`, 10, y);
+            y += 10;
+            doc.setFontSize(14);
+            doc.text(`Total: $${total}`, 10, y);
+
+            // Add watermark
+            if (userPlan === 'Pro' || userPlan === 'Advance') {
+                doc.setFontSize(40);
+                doc.setTextColor(200, 200, 200); // Light grey
+                doc.text(watermarkText, doc.internal.pageSize.width / 2, doc.internal.pageSize.height / 2, {
+                    angle: -45,
+                    align: 'center'
+                });
+            } else {
+                doc.setFontSize(40);
+                doc.setTextColor(200, 200, 200); // Light grey
+                doc.text('Generated by Global Invoice AI', doc.internal.pageSize.width / 2, doc.internal.pageSize.height / 2, {
+                    angle: -45,
+                    align: 'center'
+                });
+            }
+
+            doc.save(`invoice_${clientName.replace(/\s/g, '_')}.pdf`);
+            invoiceMessage.textContent = 'PDF Generated!';
+
+            // Increment invoice count and update Supabase
+            invoicesMade++;
+            updateSubscriptionDisplay();
+            updateInvoiceCountInSupabase();
+        });
+
+        // Save Invoice to Supabase
+        saveInvoiceBtn.addEventListener('click', async () => {
+            if (!currentUser) {
+                invoiceMessage.textContent = 'Please sign in to save invoices.';
+                return;
+            }
+            if (invoicesMade >= invoiceLimit && invoiceLimit !== Infinity) {
+                invoiceMessage.textContent = 'Invoice limit reached for your plan! Cannot save invoice.';
+                return;
+            }
+
+            const invoiceData = {
+                client_name: clientNameInput.value,
+                client_email: clientEmailInput.value,
+                items: [],
+                subtotal: parseFloat(subtotalSpan.textContent),
+                tax: parseFloat(taxAmountSpan.textContent),
+                total: parseFloat(totalAmountSpan.textContent),
+                created_at: new Date().toISOString()
+            };
+
+            document.querySelectorAll('.invoice-item-row').forEach(row => {
+                invoiceData.items.push({
+                    name: row.querySelector('.item-name').value,
+                    quantity: parseFloat(row.querySelector('.item-quantity').value),
+                    price: parseFloat(row.querySelector('.item-price').value)
+                });
+            });
+
+            try {
+                const { data, error } = await supabase
+                    .from('invoices')
+                    .insert([{ user_id: currentUser.id, data: invoiceData, created_at: invoiceData.created_at }]);
+
+                if (error) throw error;
+
+                invoiceMessage.textContent = 'Invoice saved successfully!';
+                console.log('Invoice saved:', data);
+
+                // Increment invoice count and update Supabase
+                invoicesMade++;
+                updateSubscriptionDisplay();
+                await updateInvoiceCountInSupabase();
+
+            } catch (error) {
+                invoiceMessage.textContent = `Error saving invoice: ${error.message}`;
+                console.error('Error saving invoice:', error);
+            }
+        });
+
+        async function updateInvoiceCountInSupabase() {
+            if (!currentUser) return;
+            try {
+                const { error } = await supabase
+                    .from('subscriptions')
+                    .update({ invoice_count: invoicesMade })
+                    .eq('user_id', currentUser.id);
+
+                if (error) throw error;
+                console.log('Invoice count updated in Supabase.');
+            } catch (error) {
+                console.error('Error updating invoice count:', error.message);
+            }
+        }
+
+
+        // Mock Chart.js Data (for CRM, HR, Accounting)
+        function createCharts() {
+            // Leads Chart
+            new Chart(document.getElementById('leadsChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'New Leads',
+                        data: [12, 19, 3, 5, 2, 3],
+                        backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                        borderColor: 'rgba(0, 123, 255, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            // Department Chart
+            new Chart(document.getElementById('departmentChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Sales', 'Marketing', 'Development', 'Support'],
+                    datasets: [{
+                        label: 'Employees by Department',
+                        data: [15, 10, 20, 5],
+                        backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                }
+            });
+
+            // Profit Chart
+            new Chart(document.getElementById('profitChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                    datasets: [{
+                        label: 'Profit',
+                        data: [50000, 65000, 45000, 80000],
+                        backgroundColor: '#28a745',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // Dummy Subscription Buttons
+        upgradePlanBtn.addEventListener('click', async () => {
+            if (!currentUser) {
+                alert('Please login to upgrade your plan.');
+                return;
+            }
+            // In a real app, this would trigger a payment flow and update the plan in Supabase
+            const confirmed = confirm('Simulating plan upgrade. Do you want to upgrade to Advance?');
+            if (confirmed) {
+                userPlan = 'Advance';
+                invoiceLimit = Infinity;
+                invoicesMade = 0; // Reset invoice count on upgrade
+                renewalDateSpan.textContent = new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString();
+
+                try {
+                    await supabase
+                        .from('subscriptions')
+                        .update({ plan: 'Advance', invoice_count: 0, start_date: new Date().toISOString(), end_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString() })
+                        .eq('user_id', currentUser.id);
+
+                    await supabase
+                        .from('users')
+                        .update({ plan: 'Advance' })
+                        .eq('id', currentUser.id);
+
+                    alert('Plan upgraded to Advance (mock)!');
+                    updateSubscriptionDisplay();
+                    applyPlanRestrictions();
+                } catch (error) {
+                    alert('Error upgrading plan: ' + error.message);
+                    console.error('Upgrade error:', error);
+                }
+            }
+        });
+
+        downgradePlanBtn.addEventListener('click', async () => {
+            if (!currentUser) {
+                alert('Please login to downgrade your plan.');
+                return;
+            }
+            if (userPlan === 'Free') {
+                alert('You are already on the Free Plan.');
+                return;
+            }
+            const confirmed = confirm('Simulating plan downgrade. Do you want to downgrade to Free?');
+            if (confirmed) {
+                userPlan = 'Free';
+                invoiceLimit = 3;
+                invoicesMade = Math.min(invoicesMade, invoiceLimit); // Cap invoices if already over limit
+                renewalDateSpan.textContent = new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString();
+
+                try {
+                    await supabase
+                        .from('subscriptions')
+                        .update({ plan: 'Free', invoice_count: invoicesMade, start_date: new Date().toISOString(), end_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString() })
+                        .eq('user_id', currentUser.id);
+
+                    await supabase
+                        .from('users')
+                        .update({ plan: 'Free' })
+                        .eq('id', currentUser.id);
+
+                    alert('Plan downgraded to Free (mock)!');
+                    updateSubscriptionDisplay();
+                    applyPlanRestrictions();
+                } catch (error) {
+                    alert('Error downgrading plan: ' + error.message);
+                    console.error('Downgrade error:', error);
+                }
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            checkUserSession();
+            createCharts(); // Initialize charts
+        });
+
+        // RLS will be configured in Supabase:
+        // For 'users' table:
+        // SELECT policy: `(uid() = id)`
+        // INSERT policy: `(true)`
+        // UPDATE policy: `(uid() = id)`
+
+        // For 'invoices' table:
+        // SELECT policy: `(uid() = user_id)`
+        // INSERT policy: `(uid() = user_id)`
+        // UPDATE policy: `(uid() = user_id)`
+        // DELETE policy: `(uid() = user_id)`
+
+        // For 'subscriptions' table:
+        // SELECT policy: `(uid() = user_id)`
+        // INSERT policy: `(uid() = user_id)`
+        // UPDATE policy: `(uid() = user_id)`
+        // DELETE policy: `(uid() = user_id)`
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
+</body>
+</html>
